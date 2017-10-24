@@ -359,18 +359,25 @@ static int vmount_thread_main(int argc, char *argv[])
 
 			for (int i = 0; i < thread_data.input_objs_len; ++i) {
 
-				bool already_active = (last_active == i);
+				bool this_input_already_active = (last_active == i);
 
 				ControlData *control_data_to_check = nullptr;
-				unsigned int poll_timeout = already_active ? 50 : 0; // poll only on active input to reduce latency
-				int ret = thread_data.input_objs[i]->update(poll_timeout, &control_data_to_check, already_active);
+
+				// This is the synchronization point when not stabilizing: we want to minimize latency between receiving
+				// input and updating output.  When stabilization is enabled, the output will block instead.  When there
+				// are multiple inputs, poll only the active input (and check the others without blocking) to reduce
+				// latency.
+                // TODO: Why did I change this from 0 to 1?
+				unsigned int poll_timeout = 1;
+				if (this_input_already_active && !thread_data.output_obj->is_stabilizing()) poll_timeout = 50;
+				int ret = thread_data.input_objs[i]->update(poll_timeout, &control_data_to_check, this_input_already_active);
 
 				if (ret) {
 					PX4_ERR("failed to read input %i (ret: %i)", i, ret);
 					continue;
 				}
 
-				if (control_data_to_check != nullptr || already_active) {
+				if (control_data_to_check != nullptr || this_input_already_active) {
 					control_data = control_data_to_check;
 					last_active = i;
 				}
