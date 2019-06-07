@@ -222,12 +222,12 @@ void OutputBase::_calculate_output_angles(const hrt_abstime &t)
 		// being published and the output being updated.  Note that we don't care whether poll succeeds or not, we
 		// need the current attitude whether or not it's changed.
 
-		px4_pollfd_struct_t polls[1];
-		polls[0].fd = _vehicle_attitude_sub;
-		polls[0].events = POLLIN;
+		px4_pollfd_struct_t fds[1];
+		fds[0].fd = _vehicle_attitude_sub;
+		fds[0].events = POLLIN;
 
 		const int timeout_ms = 10;
-		px4_poll(polls, 1, timeout_ms);
+		px4_poll(fds, (sizeof(fds) / sizeof(fds[0])), timeout_ms);
 		orb_copy(ORB_ID(vehicle_attitude), _vehicle_attitude_sub, &vehicle_attitude);
 		euler = matrix::Quatf(vehicle_attitude.q);
 	}

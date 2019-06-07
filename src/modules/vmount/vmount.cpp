@@ -363,11 +363,11 @@ static int vmount_thread_main(int argc, char *argv[])
 
 				ControlData *control_data_to_check = nullptr;
 
-				// This is the synchronization point when not stabilizing: we want to minimize latency between receiving
-				// input and updating output.  When stabilization is enabled, the output will block instead.  When there
-				// are multiple inputs, poll only the active input (and check the others without blocking) to reduce
-				// latency.
-                // TODO: Why did I change this from 0 to 1?
+				// This is the synchronization point when not stabilizing: we want to minimize
+				// latency between receiving input and updating output.  When stabilization is
+				// enabled, the output will block instead.  When there are multiple inputs,
+				// only wait on the active input to reduce latency.
+				// TODO: Does output block?
 				unsigned int poll_timeout = 1;
 				if (this_input_already_active && !thread_data.output_obj->is_stabilizing()) poll_timeout = 50;
 				int ret = thread_data.input_objs[i]->update(poll_timeout, &control_data_to_check, this_input_already_active);
